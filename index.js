@@ -40,8 +40,17 @@ const {AUTH0_SECRET, AUTH0_AUDIENCE, AUTH0_CLIENT_ID, AUTH0_BASE_URL} = process.
 app.get('/cupcakes', async (req, res, next) => {
   try {
     const cupcakes = await Cupcake.findAll();
-
-    res.send(cupcakes);
+    console.log(req.oidc.user);
+    //res.send(cupcakes);
+    res.setHeader("Content-type", "text/html");
+    res.send(
+      <>
+      <h1> My Web App, Inc. </h1>
+      <h1> `Welcome, ${req.oidc.user.given_name}` </h1>
+      <p><strong> `Username: ${req.oidc.user.nickname}` </strong></p>
+      <p> `Username: ${req.oidc.user.email}` </p>
+      </>
+    );
   } catch (error) {
     console.error(error);
     next(error);
