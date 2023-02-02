@@ -1,10 +1,10 @@
+const jwt = require("jsonwebtoken");
 require('dotenv').config('.env');
 const cors = require('cors');
 const express = require('express');
 const app = express();
 const morgan = require('morgan');
 const { PORT = 3000 } = process.env;
-const jwt = require("jsonwebtoken");
 // TODO - require express-openid-connect and destructure auth from it
 const { auth } = require('express-openid-connect');
 const { User, Cupcake } = require('./db');
@@ -17,7 +17,7 @@ app.use(express.urlencoded({extended:true}));
 
 /* *********** YOUR CODE HERE *********** */
 // follow the module instructions: destructure config environment variables from process.env
-const {AUTH0_SECRET, AUTH0_AUDIENCE, AUTH0_CLIENT_ID, AUTH0_BASE_URL} = process.env;
+const {AUTH0_SECRET, AUTH0_AUDIENCE, AUTH0_CLIENT_ID, AUTH0_BASE_URL, JWT_SECRET} = process.env;
 // follow the docs:
   // define the config object
   const config = {
@@ -68,6 +68,26 @@ app.get('/cupcakes', async (req, res, next) => {
     next(error);
   }
 });
+
+app.get('/me', async (req, res, next) => {
+  try {
+    const user = User.findOne(
+      {where:
+        {username: req.oidc.user.nickname},
+        raw: true
+      }
+    );
+
+    if (user) {
+      const token = jwt.sign(user, JWT_SECRET, {expressIn: '1w'});
+    }
+
+    res.send({user, token});
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+})
 
 // error handling middleware
 app.use((error, req, res, next) => {
