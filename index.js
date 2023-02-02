@@ -5,7 +5,7 @@ const app = express();
 const morgan = require('morgan');
 const { PORT = 3000 } = process.env;
 // TODO - require express-openid-connect and destructure auth from it
-
+const { auth } = require('express-openid-connect');
 const { User, Cupcake } = require('./db');
 
 // middleware
@@ -16,14 +16,31 @@ app.use(express.urlencoded({extended:true}));
 
 /* *********** YOUR CODE HERE *********** */
 // follow the module instructions: destructure config environment variables from process.env
+const {AUTH0_SECRET, AUTH0_AUDIENCE, AUTH0_CLIENT_ID, AUTH0_BASE_URL} = process.env;
 // follow the docs:
   // define the config object
+  const config = {
+    authRequired: true,
+    auth0Logout: true,
+    secret: AUTH0_SECRET,
+    baseURL: AUTH0_AUDIENCE,
+    clientID: AUTH0_CLIENT_ID,
+    issuerBaseURL: AUTH0_BASE_URL
+  }
+
   // attach Auth0 OIDC auth router
+  // auth router attaches /login, /logout, and /callback routes to the baseURL
+  app.use(auth(config));
+
   // create a GET / route handler that sends back Logged in or Logged out
+  app.get('/', (req, res) => {
+    res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
+  });
 
 app.get('/cupcakes', async (req, res, next) => {
   try {
     const cupcakes = await Cupcake.findAll();
+
     res.send(cupcakes);
   } catch (error) {
     console.error(error);
@@ -41,4 +58,3 @@ app.use((error, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Cupcakes are ready at http://localhost:${PORT}`);
 });
-
