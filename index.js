@@ -4,6 +4,7 @@ const express = require('express');
 const app = express();
 const morgan = require('morgan');
 const { PORT = 3000 } = process.env;
+const jwt = require("jsonwebtoken");
 // TODO - require express-openid-connect and destructure auth from it
 const { auth } = require('express-openid-connect');
 const { User, Cupcake } = require('./db');
@@ -32,6 +33,18 @@ const {AUTH0_SECRET, AUTH0_AUDIENCE, AUTH0_CLIENT_ID, AUTH0_BASE_URL} = process.
   // auth router attaches /login, /logout, and /callback routes to the baseURL
   app.use(auth(config));
 
+  app.use(async (req, res, next) => {
+    const [user] = await User.findOrCreate({
+      where: {
+        username: "username here",
+        name: "name here",
+        email: "email here"
+      }
+    });
+    console.log(user);
+    next();
+  })
+
   // create a GET / route handler that sends back Logged in or Logged out
   app.get('/', (req, res) => {
     res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
@@ -44,12 +57,11 @@ app.get('/cupcakes', async (req, res, next) => {
     //res.send(cupcakes);
     res.setHeader("Content-type", "text/html");
     res.send(
-      <>
-      <h1> My Web App, Inc. </h1>
-      <h1> `Welcome, ${req.oidc.user.given_name}` </h1>
-      <p><strong> `Username: ${req.oidc.user.nickname}` </strong></p>
-      <p> `Username: ${req.oidc.user.email}` </p>
-      </>
+      `<h1> My Web App, Inc. </h1>
+      <h1> Welcome, ${req.oidc.user.given_name} </h1>
+      <p><strong> Username: ${req.oidc.user.nickname} </strong></p>
+      <p> Username: ${req.oidc.user.email} </p>
+      <img src="${req.oidc.user.picture}">`
     );
   } catch (error) {
     console.error(error);
